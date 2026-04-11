@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  headline     String?
+  role         Role
+  institution  String?
+  bio          String?
+  profilePhoto String?
+  bannerColor  String?
+  interests    String[]
+  skills       String[]
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  posts             Post[]
+  comments          Comment[]
+  likes             Like[]
+  notifications     Notification[]
+  sentMessages      Message[]      @relation("SentMessages")
+  receivedMessages  Message[]      @relation("ReceivedMessages")
+  refreshTokens     RefreshToken[]
+  papers            Paper[]
+  connectionsFrom   Connection[]   @relation("ConnectionFrom")
+  connectionsTo     Connection[]   @relation("ConnectionTo")
+  topicFollows      TopicFollow[]
+  bookmarks         Bookmark[]
+}
+
+enum Role {
+  student
+  doctor
+  researcher
+  lab
+  admin
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Paper {
+  id            String                      @id @default(uuid())
+  title         String
+  authors       String[]
+  abstract      String
+  year          Int?
+  journal       String?
+  source        String
+  doi           String?
+  openAccessUrl String?
+  tags          String[]
+  fullText      String?
+  postedBy      String
+  createdAt     DateTime                    @default(now())
+
+  user     User      @relation(fields: [postedBy], references: [id])
+  posts    Post[]
+  aiCaches AICache[]
+}
+
+model Post {
+  id               String   @id @default(uuid())
+  type             PostType
+  authorId         String
+  paperId          String?
+  content          String
+  title            String?
+  githubUrl        String?
+  derivedFromPaper String?
+  techStack        String[]
+  tags             String[]
+  likeCount        Int      @default(0)
+  commentCount     Int      @default(0)
+  repostCount      Int      @default(0)
+  isFlagged        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  author    User       @relation(fields: [authorId], references: [id])
+  paper     Paper?     @relation(fields: [paperId], references: [id])
+  comments  Comment[]
+  bookmarks Bookmark[]
+}
+
+enum PostType {
+  paper
+  insight
+  question
+  project
+}
+
+model Comment {
+  id              String   @id @default(uuid())
+  postId          String
+  authorId        String
+  parentCommentId String?
+  content         String
+  likeCount       Int      @default(0)
+  isBestAnswer    Boolean  @default(false)
+  isFlagged       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User      @relation(fields: [authorId], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+}
+
+model Like {
+  userId     String
+  targetId   String
+  targetType String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([userId, targetId, targetType])
+}
+
+model Connection {
+  fromUserId String
+  toUserId   String
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  fromUser User @relation("ConnectionFrom", fields: [fromUserId], references: [id])
+  toUser   User @relation("ConnectionTo", fields: [toUserId], references: [id])
+
+  @@id([fromUserId, toUserId])
+}
+
+model TopicFollow {
+  userId    String
+  topic     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([userId, topic])
+}
+
+model Bookmark {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+model AICache {
+  id        String   @id @default(uuid())
+  paperId   String
+  cacheType String
+  level     String?
+  content   Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime @default(dbgenerated("NOW() + INTERVAL '7 days'"))
+
+  paper Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  @@unique([paperId, cacheType, level])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+model DiscussionSummary {
+  id                       String   @id @default(uuid())
+  postId                   String   @unique
+  keyClaims                String[]
+  consensusPoints          String[]
+  openQuestions            String[]
+  commentCountAtGeneration Int
+  createdAt                DateTime @default(now())
+  isValid                  Boolean  @default(true)
+}
