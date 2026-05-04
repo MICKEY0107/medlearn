@@ -1,0 +1,38 @@
+# Root-level local clutter
+.vscode/
+.kiro/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node / frontend / backend
+**/node_modules/
+**/.next/
+**/dist/
+**/coverage/
+**/*.tsbuildinfo
+
+# Python
+**/__pycache__/
+**/*.pyc
+.venv/
+venv/
+
+# Logs and debug artifacts
+**/*.log
+frontend/tsc-errors.txt
+frontend/ts-errors.txt
+frontend/ts-errors-clean.txt
+frontend/ts-errors.json
+backend/tsc-errors.txt
+backend/prisma-error.log
+backend/prisma-err.txt
+backend/prisma-out.txt
+backend/prisma-out-full.txt
+backend/prisma-clean.log
+
+# OS/editor
+.DS_Store
+Thumbs.db

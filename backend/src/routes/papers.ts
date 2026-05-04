@@ -4,6 +4,7 @@ import { authenticate, AuthRequest } from '../middleware/auth'
 import { ingestPaper } from '../services/ingestion'
 import { prisma } from '../lib/prisma'
 import { AppError } from '../middleware/errorHandler'
+import { generatePaperTags, rankSimilarPapers } from '../services/mlService'
 
 export const papersRouter = Router()
 
@@ -16,7 +17,6 @@ const upload = multer({
   },
 })
 
-// POST /api/papers/ingest
 papersRouter.post('/ingest', authenticate, upload.single('pdf'), async (req: AuthRequest, res: Response) => {
   try {
     let metadata
@@ -55,8 +55,7 @@ papersRouter.post('/ingest', authenticate, upload.single('pdf'), async (req: Aut
       },
     })
 
-    // Generate tags async — do not await
-    generateTagsAsync(paper.id, paper.title, paper.abstract).catch(console.error)
+    generateTagsAsync(paper.id, paper.title, paper.abstract, paper.authors, paper.year, paper.journal, paper.source).catch(console.error)
 
     res.status(201).json({ paper })
   } catch (error) {
@@ -67,7 +66,6 @@ papersRouter.post('/ingest', authenticate, upload.single('pdf'), async (req: Aut
   }
 })
 
-// GET /api/papers/:id
 papersRouter.get('/:id', async (req, res, next) => {
   try {
     const id = req.params.id as string
@@ -98,35 +96,76 @@ papersRouter.get('/:id', async (req, res, next) => {
   }
 })
 
-// GET /api/papers/:id/similar
-papersRouter.get('/:id/similar', async (req, res) => {
-  // Phase 2 with ML service — return empty for now
-  res.json({ papers: [] })
-})
-
-async function generateTagsAsync(paperId: string, title: string, abstract: string) {
+papersRouter.get('/:id/similar', async (req, res, next) => {
   try {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default
-    const anthropic = new Anthropic({ apiKey: process.env.CLAUDE_API_KEY })
+    const id = req.params.id as string
+    const paper = await prisma.paper.findUnique({ where: { id } })
+    if (!paper) throw new AppError('Paper not found', 404)
 
-    const message = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 256,
-      messages: [{
-        role: 'user',
-        content: `Generate 5-8 specific medical/research topic tags for this paper. Return ONLY a JSON array of strings, no other text:
-
-Title: ${title}
-Abstract: ${abstract.substring(0, 500)}`,
-      }],
+    const candidates = await prisma.paper.findMany({
+      where: { id: { not: id } },
+      select: {
+        id: true,
+        title: true,
+        authors: true,
+        abstract: true,
+        year: true,
+        journal: true,
+        tags: true,
+      },
+      take: 200,
     })
 
-    const content = message.content[0]
-    if (content.type !== 'text') return
+    const papers = rankSimilarPapers(
+      {
+        id: paper.id,
+        title: paper.title,
+        abstract: paper.abstract,
+        authors: paper.authors,
+        tags: paper.tags,
+        year: paper.year,
+        journal: paper.journal,
+        source: paper.source,
+      },
+      candidates.map((candidate) => ({
+        id: candidate.id,
+        title: candidate.title,
+        abstract: candidate.abstract,
+        authors: candidate.authors,
+        tags: candidate.tags,
+        year: candidate.year,
+        journal: candidate.journal,
+      }))
+    )
 
-    const tagsStr = content.text.replace(/```json|```/g, '').trim()
-    const tags = JSON.parse(tagsStr)
-    if (Array.isArray(tags)) {
+    res.json({ papers })
+  } catch (err) {
+    next(err)
+  }
+})
+
+async function generateTagsAsync(
+  paperId: string,
+  title: string,
+  abstract: string,
+  authors: string[],
+  year?: number | null,
+  journal?: string | null,
+  source?: string | null
+) {
+  try {
+    const tags = await generatePaperTags({
+      id: paperId,
+      title,
+      abstract,
+      authors,
+      tags: [],
+      year,
+      journal,
+      source,
+    })
+
+    if (tags.length > 0) {
       await prisma.paper.update({
         where: { id: paperId },
         data: { tags },

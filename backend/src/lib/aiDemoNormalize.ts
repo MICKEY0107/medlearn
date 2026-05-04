@@ -76,6 +76,6 @@ export function normalizeConceptPathResult(content: unknown): { concepts: unknow
 }
 
 export function claudeConfigured(): boolean {
-  const k = process.env.CLAUDE_API_KEY
-  return !!k && k !== 'placeholder' && k.length > 10
+  const k = process.env.CLAUDE_API_KEY?.trim()
+  return !!k && k.startsWith('sk-ant-') && !k.toLowerCase().includes('placeholder')
 }

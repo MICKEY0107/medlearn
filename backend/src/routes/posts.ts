@@ -95,7 +95,17 @@ postsRouter.get('/', optionalAuth, async (req: AuthRequest, res: Response, next:
 // --- POST /api/posts --- Create post (before /:id routes)
 postsRouter.post('/', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { type, content, paperId, derivedFromPaper, derivedFromPaperId } = req.body
+    const {
+      type,
+      content,
+      paperId,
+      derivedFromPaper,
+      derivedFromPaperId,
+      title,
+      githubUrl,
+      techStack,
+      tags,
+    } = req.body
     const userId = req.user!.userId
     const derivedPaperRef = derivedFromPaper ?? derivedFromPaperId ?? null
 
@@ -110,6 +120,10 @@ postsRouter.post('/', authenticate, async (req: AuthRequest, res: Response, next
         content,
         authorId: userId,
         ...(paperId && { paperId }),
+        ...(title && { title }),
+        ...(githubUrl && { githubUrl }),
+        ...(Array.isArray(techStack) && { techStack }),
+        ...(Array.isArray(tags) && { tags }),
         derivedFromPaper: derivedPaperRef || null,
       },
       include: {
