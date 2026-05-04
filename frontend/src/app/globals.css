@@ -1,0 +1,232 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: #FFFFFF;
+  /* Healthcare green brand */
+  --color-brand: #0D7A5F;
+  --color-brand-light: #E6F4F0;
+  --color-amber: #E8A020;
+  --color-amber-light: #FEF3E2;
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Post type accent colours */
+  --color-post-paper:    #2563EB;   /* blue    */
+  --color-post-insight:  #7C3AED;   /* purple  */
+  --color-post-question: #16A34A;   /* green   */
+  --color-post-project:  #CA8A04;   /* yellow  */
+}
+
+:root {
+  --background: #F2F6F5;            /* Very soft mint-white — clinical, calm */
+  --foreground: #111C1A;            /* Deep green-tinted near-black */
+  --card: #FFFFFF;
+  --card-foreground: #111C1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #111C1A;
+  --primary: #0D7A5F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAF2F0;
+  --secondary-foreground: #111C1A;
+  --muted: #F4F8F7;
+  --muted-foreground: #5A7570;
+  --accent: #EAF2F0;
+  --accent-foreground: #111C1A;
+  --destructive: #DC2626;
+  --border: #D4E4E0;                /* Soft green-tinted border */
+  --input: #D4E4E0;
+  --ring: #0D7A5F;
+  --radius: 0.75rem;
+}
+
+.dark {
+  /* Background layers — dark grey hierarchy, not pure black */
+  --background: #161B1A;        /* page bg — darkest */
+  --foreground: #E8EDEC;        /* primary text — off-white, easy on eyes */
+  --card: #1E2523;              /* card surface — one step lighter than bg */
+  --card-foreground: #E8EDEC;
+  --popover: #252C2A;           /* dropdowns / popovers */
+  --popover-foreground: #E8EDEC;
+  --primary: #34D399;           /* brand green — bright enough on dark */
+  --primary-foreground: #0A1210;
+  --secondary: #252C2A;
+  --secondary-foreground: #C8D5D3;
+  --muted: #1E2523;
+  --muted-foreground: #7A9490;  /* subdued text — readable but not loud */
+  --accent: #252C2A;
+  --accent-foreground: #E8EDEC;
+  --destructive: #F87171;
+  --border: #2E3836;            /* visible but not harsh */
+  --input: #2E3836;
+  --ring: #34D399;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Subtle green-tinted radial wash — clinical feel */
+    background-image:
+      radial-gradient(at 0% 0%,   hsla(165, 60%, 40%, 0.05) 0px, transparent 55%),
+      radial-gradient(at 100% 0%,  hsla(165, 50%, 50%, 0.04) 0px, transparent 55%),
+      radial-gradient(at 50% 100%, hsla(165, 40%, 45%, 0.03) 0px, transparent 55%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image: none;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* Sidebar / panel cards */
+  .glass-panel {
+    @apply bg-card border border-border shadow-sm rounded-[0.75rem] overflow-hidden transition-all duration-200;
+  }
+  .glass-panel:hover {
+    @apply shadow-md;
+  }
+
+  /* Resize handle between panels */
+  .resize-handle {
+    @apply w-1 cursor-col-resize shrink-0 rounded-full transition-colors duration-150;
+    background: transparent;
+  }
+  .resize-handle:hover,
+  .resize-handle.dragging {
+    background: #0D7A5F33;
+  }
+}
+
+/* Feed cards — outside @layer so authored specificity wins over Tailwind utilities */
+.feed-card {
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-width: 1px;
+  border-style: solid;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Pop-out on hover/focus — same for all types */
+.feed-card:hover,
+.feed-card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+}
+
+/* Paper — blue */
+.feed-card.feed-card-paper {
+  background-color: #EFF6FF;
+  border-color: #BFDBFE;
+  border-left: 3px solid #2563EB;
+}
+
+/* Insight — purple */
+.feed-card.feed-card-insight {
+  background-color: #F5F3FF;
+  border-color: #DDD6FE;
+  border-left: 3px solid #7C3AED;
+}
+
+/* Question — light green */
+.feed-card.feed-card-question {
+  background-color: #F0FDF4;
+  border-color: #BBF7D0;
+  border-left: 3px solid #16A34A;
+}
+
+/* Project — yellow */
+.feed-card.feed-card-project {
+  background-color: #FEFCE8;
+  border-color: #FEF08A;
+  border-left: 3px solid #CA8A04;
+}
+
+/* ── Dark mode overrides ── */
+
+/* glass-panel in dark */
+.dark .glass-panel {
+  background-color: #1E2523;
+  border-color: #2E3836;
+}
+.dark .glass-panel:hover {
+  border-color: #3A4A47;
+}
+
+/* Feed cards — desaturated dark tints, accent border stays vivid */
+.dark .feed-card.feed-card-paper {
+  background-color: #1A2030;
+  border-color: #2A3A5A;
+  border-left: 3px solid #3B82F6;
+}
+
+.dark .feed-card.feed-card-insight {
+  background-color: #1E1A2E;
+  border-color: #352A52;
+  border-left: 3px solid #A78BFA;
+}
+
+.dark .feed-card.feed-card-question {
+  background-color: #162018;
+  border-color: #1E3A24;
+  border-left: 3px solid #4ADE80;
+}
+
+.dark .feed-card.feed-card-project {
+  background-color: #201C0E;
+  border-color: #3A3010;
+  border-left: 3px solid #FACC15;
+}
+
+/* Pop-out shadow is more visible on dark */
+.dark .feed-card:hover,
+.dark .feed-card:focus-within {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
